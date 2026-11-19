@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Explore a supplier invoice reconciliation prototype with a three-document comparison, finance review, and ERPNext sandbox writeback when available.">
+<title>Invoice Desk | Invoice Automation Portfolio by Lu Zhang</title>
+<style>
+:root {
+  color-scheme: light;
+  --paper:#f5f7fa; --white:#fff; --navy:#102238; --ink:#1d3046; --muted:#536475;
+  --line:#d9e1e9; --blue:#184fb8; --blue-soft:#eaf1ff;
+  --amber:#753e0c; --amber-soft:#fff0d7; --green:#176445; --green-soft:#e5f5ec;
+  --sans:"Segoe UI",system-ui,sans-serif; --serif:Georgia,serif; --mono:ui-monospace,Consolas,monospace;
+}
+* { box-sizing:border-box }
+html { scroll-behavior:smooth }
+body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.55 var(--sans) }
+[hidden] { display:none !important }
+a { color:inherit }
+button, a { -webkit-tap-highlight-color:transparent }
+button { font:inherit; cursor:pointer }
+:focus-visible { outline:3px solid #2866ce; outline-offset:4px }
+.wrap { width:min(1220px, calc(100% - 88px)); margin-inline:auto }
+header { background:var(--white); border-bottom:1px solid var(--line) }
+header .wrap { min-height:68px; display:flex; justify-content:space-between; align-items:center; gap:18px }
+.brand { display:flex; gap:10px; align-items:center; font-weight:750; color:var(--navy); text-decoration:none }
+.brand-mark { width:31px; height:31px; display:grid; place-items:center; color:white; background:var(--navy); border-radius:7px; font:16px var(--mono) }
+nav { display:flex; align-items:center; gap:25px; font-size:14px; font-weight:650 }
+nav a { text-decoration:none }
+nav a:hover { color:var(--blue) }
+nav a:last-child { border:1px solid var(--line); border-radius:6px; padding:6px 12px }
+.hero { padding:61px 0 64px; display:grid; grid-template-columns:minmax(0, .82fr) minmax(0, 1.18fr); gap:48px; align-items:start }
+.eyebrow { margin:0 0 14px; color:var(--blue); font:650 12px/1.45 var(--mono); letter-spacing:.08em; text-transform:uppercase }
+h1,h2,p { margin-top:0 }
+h1 { font:400 clamp(46px, 5.1vw, 68px)/1.01 var(--serif); letter-spacing:-.057em; color:var(--navy); margin-bottom:20px }
+h1 em { color:var(--blue); font-weight:400 }
+.hero-copy { padding-top:29px }
+.lead { max-width:455px; font-size:18px; color:var(--muted); margin-bottom:24px }
+.cta { display:inline-flex; align-items:center; justify-content:center; gap:14px; padding:11px 15px; min-height:44px; border:1px solid transparent; border-radius:7px; font:650 14px/1.45 var(--sans); text-decoration:none }
+.cta.primary { background:var(--blue); color:white }
+.cta.primary:hover { background:#143f90 }
+.cta.secondary { color:var(--navy); background:var(--white); border-color:var(--line) }
+.cta.secondary:hover { background:var(--blue-soft) }
+.cta[aria-disabled="true"],.cta:disabled { opacity:.6; cursor:default }
+
+.hero-actions { display:flex; align-items:center; flex-wrap:wrap; gap:10px 20px }
+.demo-note { border-left:2px solid #a8bfe5; padding-left:11px; margin:19px 0 0; max-width:405px; color:var(--muted); font-size:13px }
+.demo-note strong { color:var(--navy) }
+.hero-link { color:var(--blue); font-size:14px; font-weight:650; text-underline-offset:3px; min-height:44px; display:inline-flex; align-items:center }
+
+.desk { background:var(--white); border:1px solid #d0dae6; border-radius:14px; overflow:hidden; box-shadow:0 20px 45px #152d4814 }
+.desk-header { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 19px; background:var(--navy); color:white }
+.desk-header h2 { margin:0; font-weight:650; font-size:14px }
+.desk-header span { color:#d7e5f4; font:11px var(--mono) }
+.desk-body { padding:19px }
+.samples { display:flex; flex-wrap:wrap; gap:7px; margin-bottom:17px }
+.sample { color:var(--muted); border:1px solid var(--line); background:white; border-radius:5px; padding:5px 10px; min-height:44px; font-size:12px; font-weight:650; touch-action:manipulation }
+.sample[aria-pressed="true"] { background:var(--blue-soft); color:#153f91; border-color:#9db8e9 }
+.sample:hover { border-color:var(--blue) }
+.case-header { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:12px }
+.case-id { color:var(--muted); font:12px/1.4 var(--mono); margin:0 0 3px }
+.case-header h3 { color:var(--navy); font-size:19px; letter-spacing:-.025em; margin:0 }
+.status { flex-shrink:0; color:var(--amber); background:var(--amber-soft); border-radius:4px; padding:4px 8px; font-size:12px; font-weight:700 }
+.status.ready,.status.draft { color:var(--green); background:var(--green-soft) }
+.status.duplicate,.status.waiting { color:var(--blue); background:var(--blue-soft) }
+.evidence { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin-bottom:13px; background:#fafbfd }
+.evidence > div { padding:10px 12px 11px; min-width:0 }
+.evidence > div + div { border-left:1px solid var(--line) }
+.evidence dt { font-size:12px; color:var(--muted) }
+.evidence dd { margin:0 }
+.evidence .doc-id { font:11px/1.4 var(--mono); overflow-wrap:anywhere; color:var(--muted); margin:2px 0 }
+.evidence .amount { color:var(--navy); font:400 clamp(29px,3vw,42px)/1.1 var(--serif); letter-spacing:-.05em }
+.evidence .unit { color:var(--muted); margin-left:3px; font:11px var(--sans); letter-spacing:0 }
+.evidence > .flagged { background:var(--amber-soft) }
+.evidence > .flagged .amount,.evidence > .flagged .unit { color:var(--amber) }
+
+.math-sheet { background:#f5f8fc; border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin-bottom:12px }
+.math-values { display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center }
+.math-values dl { display:grid; grid-template-columns:auto 1fr; gap:4px 9px; margin:0; align-items:baseline }
+.math-values dt { font-size:12px; color:var(--muted) }
+.math-values dd { margin:0; font:12px/1.45 var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap; color:var(--ink) }
+.variance { text-align:right; color:var(--green); min-width:74px }
+.variance strong { display:block; font:400 clamp(37px, 4vw, 55px)/1 var(--serif); letter-spacing:-.055em }
+.variance span { display:block; font-size:12px; font-weight:700 }
+.math-sheet.flagged { background:#fff6e8; border-color:#e9ce9c }
+.flagged .variance { color:var(--amber) }
+.variance-bar { display:flex; height:9px; margin-top:12px; overflow:hidden; background:#e6edf5; border-radius:2px }
+.variance-bar .matched { width:var(--matched); background:#365f95 }
+.variance-bar .difference { flex:1; background:repeating-linear-gradient(135deg,#bc7227 0 2px,#fbdc9f 2px 5px) }
+.case-summary { margin-bottom:11px; font-size:14px; color:var(--ink) }
+.connection { margin:12px 0 0; padding:8px 10px; color:var(--muted); font-size:12px; border:1px solid var(--line); border-radius:6px; overflow-wrap:anywhere }
+.connection.success { background:var(--green-soft); color:var(--green); border-color:#a8cebb }
+.connection.offline { background:var(--amber-soft); color:var(--amber); border-color:#e9ce9c }
+.writeback-link { color:inherit; font-weight:650; margin-left:5px }
+
+.case-summary strong { color:var(--navy) }
+.case-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px 13px }
+.text-button { color:var(--blue); padding:5px 0; border:none; background:none; font-size:13px; font-weight:650; text-decoration:underline; text-underline-offset:3px }
+.case-detail { margin-top:14px; border-top:1px solid var(--line); padding-top:12px }
+.case-detail h4 { margin:0 0 5px; color:var(--navy); font-size:14px }
+.case-detail ol { margin:0; padding-left:20px; color:var(--muted); font-size:13px }
+.case-detail li + li { margin-top:4px }
+section.gap { padding:46px 0; border-top:1px solid var(--line); background:var(--white) }
+.section-title { margin:0 0 8px; color:var(--navy); font:400 clamp(34px,4vw,49px)/1.1 var(--serif); letter-spacing:-.045em }
+.scenario-flow { list-style:none; padding:0; display:grid; grid-template-columns:repeat(4,1fr); gap:23px; margin:25px 0 0 }
+.scenario-flow li { border-top:2px solid #a8bfe5; padding-top:13px }
+.scenario-flow li strong { display:block; color:var(--navy); margin-bottom:5px }
+.scenario-flow li span { display:block; font-size:14px; color:var(--muted) }
+.pilot { padding:48px 0 52px; border-top:1px solid var(--line) }
+.pilot-card { background:var(--navy); color:#e0e9f5; padding:32px; border-radius:12px; display:grid; grid-template-columns:1fr 1fr; gap:35px; align-items:center }
+.pilot-card .section-title { color:white }
+.pilot-card p { margin-bottom:17px; max-width:485px }
+.pilot-card h3 { margin:0; font-size:15px; color:white }
+.pilot-card ul { margin:8px 0 0; padding-left:19px; font-size:14px }
+.pilot-card li + li { margin-top:6px }
+
+.pilot-card label { display:block; font-size:13px; margin:0 0 6px; color:white; font-weight:650 }
+.pilot-card textarea { width:100%; resize:vertical; min-height:91px; padding:9px 11px; color:var(--ink); background:#f6f8fc; border:1px solid #d9e1ea; border-radius:6px; font:13px/1.5 var(--sans) }
+.pilot-card .cta { margin-top:8px }
+.pilot-card .pilot-message { font-size:13px; margin:9px 0 0 }
+.copy-status { font-size:13px; margin:8px 0 0 !important; min-height:1.5em }
+.source-strip { margin:23px 0 0; background:var(--paper); border:1px solid var(--line); border-radius:7px; padding:12px 14px; color:var(--muted); font-size:13px }
+.source-strip strong { color:var(--navy) }
+
+footer { border-top:1px solid var(--line); padding:16px 0; color:var(--muted); font-size:13px }
+/* ===== Refresh layer ===== */
+:root { --paper:#f4f2ed; --navy:#0e2033; --ink:#1b2c3f; --muted:#4f6072; --line:#dcd9d0; --blue:#1b4cae; --blue-soft:#e8eefb; --serif:"Iowan Old Style","Palatino Linotype",Georgia,serif; --gold:#ffc46b }
+body { background:var(--paper) }
+header { background:rgba(255,255,255,.86); border-bottom-color:var(--line) }
+.brand-mark { border-radius:9px; background:linear-gradient(145deg,#1b3a5c,var(--navy)); color:var(--gold) }
+nav a { min-height:44px; display:inline-flex; align-items:center }
+nav a:last-child { background:var(--navy); color:#fff; border-color:var(--navy); border-radius:8px; padding:6px 16px }
+nav a:last-child:hover { background:var(--blue); color:#fff }
+.hero { padding:72px 0 76px; grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr); gap:56px; align-items:center }
+.hero-copy { padding-top:0 }
+h1 { font-size:clamp(42px,5vw,66px); line-height:1.03; letter-spacing:-.045em }
+h1 em { display:block; font-style:italic }
+.lead { max-width:480px; color:var(--muted) }
+.variance-tag { display:flex; align-items:center; gap:14px; margin:0 0 24px; padding:12px 16px 12px 14px; max-width:480px; background:var(--navy); color:#d6e2f0; border-radius:12px; font-size:14px; line-height:1.4 }
+.variance-tag b { font:400 clamp(38px,4.5vw,50px)/1 var(--serif); color:var(--gold); letter-spacing:-.04em }
+.variance-tag span { display:block }
+.variance-tag small { display:block; font:11px var(--mono); letter-spacing:.06em; text-transform:uppercase; color:#a9bdd3; margin-top:2px }
+.cta { border-radius:9px; min-height:48px; padding:11px 20px }
+.cta.primary { background:var(--blue); box-shadow:0 6px 16px #1b4cae33 }
+.demo-note { display:none }
+.truth { list-style:none; margin:22px 0 0; padding:0; display:grid; gap:8px; max-width:480px; font-size:13px; color:var(--muted) }
+.truth li { display:grid; grid-template-columns:auto 1fr; gap:10px; align-items:baseline }
+.tag { font:700 11px/1 var(--mono); letter-spacing:.05em; text-transform:uppercase; padding:5px 7px; border-radius:4px; border:1px solid; white-space:nowrap }
+.tag.tag-sample { color:#4a3a8a; background:#efecfb; border-color:#cfc7f0 }
+.tag.ai { color:var(--blue); background:var(--blue-soft); border-color:#b9cbef }
+.tag.human { color:var(--amber); background:var(--amber-soft); border-color:#e9ce9c }
+.tag.erp { color:var(--green); background:var(--green-soft); border-color:#a8cebb }
+.desk { border-radius:18px; border-color:#cfd6df; box-shadow:0 30px 70px #0e203322, 0 2px 0 #fff inset }
+.desk-header { background:linear-gradient(180deg,#14304a,var(--navy)); padding:16px 22px }
+.desk-header span { background:#ffffff1c; padding:4px 9px; border-radius:99px; color:#fff }
+.desk-body { padding:22px }
+.sample { border-radius:99px; padding:5px 14px }
+.sample[aria-pressed="true"] { background:var(--navy); color:#fff; border-color:var(--navy) }
+.case-header h3 { font:400 24px/1.2 var(--serif); letter-spacing:-.02em }
+.status { border-radius:99px; padding:5px 11px }
+.evidence { border-radius:12px; background:#fff }
+.evidence > .flagged { background:var(--amber-soft); box-shadow:inset 0 3px 0 #c77a1f }
+.evidence .amount { font-size:clamp(28px,3vw,38px) }
+.math-sheet { padding:18px 20px; border-radius:14px; background:var(--green-soft); border-color:#a8cebb }
+.math-values { gap:16px }
+.math-sheet.flagged { background:var(--navy); border-color:var(--navy); color:#d6e2f0 }
+.math-sheet.flagged dt { color:#a9bdd3 }
+.math-sheet.flagged dd { color:#fff }
+.variance { min-width:0 }
+.variance strong { font-size:clamp(52px,6vw,84px); letter-spacing:-.06em }
+.flagged .variance { color:var(--gold) }
+.variance span { text-transform:uppercase; letter-spacing:.08em; font:700 11px var(--mono) }
+.variance-bar { height:12px; border-radius:99px; margin-top:16px; background:#c9dfd2 }
+.variance-bar .matched { background:#2f6fb5 }
+.flagged .variance-bar { background:#35485e }
+.flagged .variance-bar .matched { background:#8db2ea }
+.flagged .variance-bar .difference { background:repeating-linear-gradient(135deg,#ffc46b 0 3px,#a8611a 3px 6px) }
+.case-summary { font-size:15px }
+.connection { border-radius:8px; border-style:dashed }
+.connection.success { border-style:solid }
+.text-button { min-height:44px; padding:5px 4px }
+section.gap { background:#fff; padding:64px 0 }
+.section-title { font-size:clamp(32px,4vw,46px); letter-spacing:-.035em }
+.scenario-flow { counter-reset:s; gap:20px; margin-top:30px }
+.scenario-flow li { counter-increment:s; border:1px solid var(--line); border-top:3px solid var(--navy); border-radius:12px; padding:18px; background:var(--paper) }
+.scenario-flow li::before { content:"0" counter(s); display:block; font:700 12px var(--mono); color:var(--blue); margin-bottom:8px }
+.scenario-flow li:nth-child(4) { border-top-color:var(--green) }
+.source-strip { border-radius:10px; background:var(--paper) }
+.pilot { padding:68px 0 76px }
+.pilot-card { border-radius:22px; padding:44px; gap:44px; align-items:start; background:linear-gradient(160deg,#16314c,var(--navy) 60%) }
+.pilot-card .section-title { margin-bottom:14px }
+.pilot-card .eyebrow { color:var(--gold) }
+.pilot-steps { list-style:none; margin:20px 0 0; padding:0; display:grid; gap:12px; counter-reset:p }
+.pilot-steps li { counter-increment:p; display:grid; grid-template-columns:32px 1fr; gap:12px; align-items:start; font-size:14px }
+.pilot-steps li::before { content:counter(p); display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:var(--gold); color:var(--navy); font-weight:800 }
+.pilot-compose { background:#ffffff12; border:1px solid #ffffff2e; border-radius:16px; padding:20px }
+.pilot-card textarea { min-height:150px; border-radius:10px; font-size:14px; padding:12px 14px }
+.pilot-card .cta.secondary { background:var(--gold); color:var(--navy); border-color:var(--gold); width:100% }
+.pilot-card .cta.secondary:hover { background:#ffd28f }
+.pilot-card :focus-visible { outline-color:#fff }
+.pilot-card .by { font-size:13px; color:#b9cadc; margin:12px 0 0 }
+.pilot-card .by strong { color:#fff }
+.pilot-card ul.delivers { margin-top:14px }
+.copy-status { color:#fff }
+footer { background:#fff }
+@media (max-width:1030px) {
+  .hero { gap:36px }
+}
+@media (max-width:780px) {
+  .hero { padding:32px 0 40px; gap:28px }
+  .pilot-card { padding:24px 18px }
+  .desk-body { padding:16px }
+  section.gap { padding:40px 0 }
+}
+@media (max-width:420px) {
+  .variance-tag { flex-direction:column; align-items:flex-start; gap:6px }
+  .math-sheet { padding:14px }
+  .math-values { grid-template-columns:1fr }
+  .variance { text-align:left }
+  .scenario-flow { grid-template-columns:1fr }
+  .desk-header span { font-size:10px }
+}
+@media (max-width:1030px) {
+  .wrap { width:calc(100% - 48px) }
+  .hero { gap:29px }
+  h1 { font-size:clamp(42px,6vw,62px) }
+  .desk-body { padding:15px }
+}
+@media (max-width:780px) {
+  .wrap { width:calc(100% - 36px) }
+  .hero { grid-template-columns:1fr; padding:28px 0; gap:21px }
+  h1 { max-width:600px }
+  .hero-copy { padding-top:0 }
+  .lead { font-size:16px; margin-bottom:18px }
+  .scenario-flow { grid-template-columns:repeat(2,1fr); gap:20px }
+  section.gap,.pilot { padding:32px 0 }
+  .pilot-card { grid-template-columns:1fr; gap:16px; padding:23px }
+}
+@media (max-width:420px) {
+  header .wrap { min-height:58px }
+  nav { gap:10px }
+  nav a:first-child { display:none }
+  .desk-header { padding:11px 12px }
+  .desk-body { padding:12px }
+  .case-header h3 { font-size:16px }
+  .case-id,.status { font-size:11px }
+  .evidence > div { padding:7px }
+  .evidence dt { font-size:11px }
+  .evidence .doc-id { font-size:11px }
+  .evidence .unit { display:block; margin-left:0 }
+  .samples { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)) }
+  .sample { padding:5px 3px }
+  .math-values { gap:5px }
+  .math-values dl { gap:3px 6px }
+  .math-values dt,.math-values dd { font-size:11px }
+  .hero-actions .cta,.case-actions .cta { width:100% }
+  .case-actions .text-button { min-height:44px }
+
+}
+@media (max-width:640px) {
+  .hero-copy .truth { display:none }
+  .hero-copy p.demo-note { display:block; margin:14px 0 0 }
+}
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto } }
+.proof { padding:51px 0; border-block:1px solid var(--line); background:var(--paper) }
+.proof-grid { display:grid; grid-template-columns:minmax(0,.68fr) minmax(0,1fr); align-items:center; gap:36px }
+.proof-summary p { color:var(--muted); max-width:425px }
+.proof-meta { display:flex; flex-wrap:wrap; gap:14px 26px; padding:12px 0; border-top:1px solid var(--line); margin:0 }
+.proof-meta dt { color:var(--muted); font-size:12px }
+.proof-meta dd { color:var(--navy); margin:3px 0 0; font-size:14px; font-weight:700 }
+.proof-meta code { font-size:13px }
+.proof figure { margin:0 }
+.proof img { display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:9px; background:white }
+.proof figcaption { margin-top:8px; color:var(--muted); font-size:13px }
+.proof figcaption a { color:var(--blue); font-weight:650 }
+@media (max-width:780px) {
+  .proof { padding:34px 0 }
+  .proof-grid { grid-template-columns:1fr; gap:15px }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">≡</span>Invoice Desk</a>
+    <nav aria-label="Main navigation">
+      <a href="#workflow">How it works</a>
+      <a href="#pilot">Scope a pilot</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="wrap hero" aria-labelledby="headline">
+    <div class="hero-copy">
+      <p class="eyebrow">Invoice automation for accounts payable</p>
+      <h1 id="headline">Catch overbilling <em>before it reaches your books.</em></h1>
+      <p class="lead">Match each supplier invoice to the purchase order and warehouse receipt. Route exceptions to finance, then save the corrected invoice as an ERP draft.</p>
+      <p class="variance-tag"><b aria-hidden="true">$240</b><span>Sample case: 100 units billed, 90 received at $24. The extra 10 units are held for review.<small>Sample data</small></span></p>
+      <div class="hero-actions">
+        <a class="cta primary" href="#pilot">Scope a pilot <span aria-hidden="true">↓</span></a>
+        <a class="hero-link" href="#demo" id="try-demo">Try the mismatch</a>
+        <a class="hero-link" href="#proof">See ERPNext test</a>
+      </div>
+      <p class="demo-note"><strong>Interactive portfolio prototype.</strong> The review desk uses sample data. A recorded ERPNext sandbox test appears below.</p>
+      <ul class="truth" aria-label="What is simulated and what is real">
+        <li><span class="tag tag-sample">Sample</span><span>Fictional invoices, purchase orders and receipts.</span></li>
+        <li><span class="tag ai">Extraction</span><span>Field reading is simulated in this prototype.</span></li>
+        <li><span class="tag human">Approval</span><span>Play the finance reviewer in the demo.</span></li>
+        <li><span class="tag erp">ERPNext</span><span>See the recorded draft writeback test below.</span></li>
+      </ul>
+    </div>
+    <section class="desk" id="demo" aria-labelledby="demo-title" tabindex="-1">
+      <div class="desk-header">
+        <h2 id="demo-title">Invoice review desk</h2>
+        <span id="desk-mode">Preview mode</span>
+      </div>
+      <div class="desk-body">
+        <div class="samples" role="group" aria-label="Select a sample invoice">
+          <button class="sample" type="button" data-case="exception" aria-pressed="true">Mismatch</button>
+          <button class="sample" type="button" data-case="clean" aria-pressed="false">Clean match</button>
+          <button class="sample" type="button" data-case="duplicate" aria-pressed="false">Duplicate</button>
+        </div>
+        <div class="case-header">
+          <div>
+            <p class="case-id" id="case-id"></p>
+            <h3 id="case-name"></h3>
+          </div>
+          <span id="case-status" class="status"></span>
+        </div>
+        <dl class="evidence" aria-label="Document comparison">
+          <div id="invoice-card"><dt>Supplier invoice</dt><dd id="invoice-id" class="doc-id"></dd><dd class="amount"><span id="billed"></span><span class="unit">units</span></dd></div>
+          <div><dt>Purchase order</dt><dd id="order-id" class="doc-id"></dd><dd class="amount"><span id="ordered"></span><span class="unit">units</span></dd></div>
+          <div><dt>Warehouse receipt</dt><dd id="receipt-id" class="doc-id"></dd><dd class="amount"><span id="received"></span><span class="unit">units</span></dd></div>
+        </dl>
+        <div class="math-sheet" id="variance-sheet" aria-label="Invoice comparison amounts">
+          <div class="math-values">
+            <dl>
+              <dt>Billed</dt><dd id="billed-amount"></dd>
+              <dt>Received at PO price</dt><dd id="received-amount"></dd>
+            </dl>
+            <div class="variance"><strong id="variance-value"></strong><span id="variance-label">Difference</span></div>
+          </div>
+          <div class="variance-bar" aria-hidden="true" id="variance-bar"><span class="matched"></span><span class="difference"></span></div>
+        </div>
+        <p class="case-summary" id="case-summary" aria-live="polite"></p>
+        <div class="case-actions">
+          <button class="cta primary" id="advance" type="button"></button>
+          <button class="text-button" id="show-evidence" type="button" aria-controls="case-detail" aria-expanded="false">View audit trail</button>
+          <button class="text-button" id="reset" type="button" hidden>Restart case</button>
+        </div>
+        <p id="connection" class="connection" aria-live="polite">
+          <span id="connection-text">Preview mode uses sample ERP draft IDs.</span>
+          <a id="draft-link" class="writeback-link" target="_blank" rel="noopener" hidden>Open ERPNext draft ↗</a>
+        </p>
+        <div class="case-detail" id="case-detail" hidden>
+          <h4>Audit trail</h4>
+          <ol id="audit"></ol>
+        </div>
+        <noscript>Enable JavaScript to try the sample invoices.</noscript>
+      </div>
+    </section>
+  </section>
+
+  <section class="gap" id="workflow" aria-labelledby="workflow-title">
+    <div class="wrap">
+      <h2 class="section-title" id="workflow-title">From inbox to ERP draft</h2>
+      <ol class="scenario-flow">
+        <li><strong>Receive the invoice</strong><span>The case starts with sample fields from a supplier PDF. A pilot would pull them from your shared inbox.</span></li>
+        <li><strong>Read and verify</strong><span>Compare invoice quantity and price with the order and receipt. The page calculates the difference from the sample values.</span></li>
+        <li><strong>Review exceptions</strong><span>Try requesting a correction and approving the revised invoice as the finance reviewer.</span></li>
+        <li><strong>Save the draft</strong><span>The connected version can save a purchase invoice draft to a local ERPNext sandbox and show its record ID.</span></li>
+      </ol>
+      <p class="source-strip"><strong>In a client pilot:</strong> inbox or upload → document extraction → order and receipt lookup → finance review → draft writeback.</p>
+    </div>
+  </section>
+
+  <section class="proof" id="proof" aria-labelledby="proof-title">
+    <div class="wrap proof-grid">
+      <div class="proof-summary">
+        <p class="eyebrow">Recorded local test · November 19, 2026</p>
+        <h2 class="section-title" id="proof-title">From review to a verified draft</h2>
+        <p>In a local ERPNext sandbox, approving the corrected sample invoice created a purchase invoice draft. The app read back its ID, total, and draft status through the API. A retry returned the same record.</p>
+        <dl class="proof-meta">
+          <div><dt>ERPNext record</dt><dd><code>ACC-PINV-2026-00001</code></dd></div>
+          <div><dt>Draft total</dt><dd>$2,160</dd></div>
+          <div><dt>ERP status</dt><dd>Draft</dd></div>
+        </dl>
+        <p>The public walkthrough uses sample draft IDs. This screenshot records the separate local writeback test.</p>
+      </div>
+      <figure>
+        <a href="erpnext-draft-proof.png"><img src="erpnext-draft-proof.png" alt="Invoice Desk shows ERPNext draft ACC-PINV-2026-00001, with a verified total of $2,160 and the audit trail." width="1440" height="1060" loading="lazy" decoding="async"></a>
+        <figcaption><a href="erpnext-draft-proof.png">Open the full-size test capture</a></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="pilot" id="pilot" aria-labelledby="pilot-title">
+    <div class="wrap pilot-card">
+      <div>
+        <p class="eyebrow">Next step</p>
+        <h2 class="section-title" id="pilot-title">Pilot one invoice workflow</h2>
+        <p>Start with one inbox, one invoice format, and one ERP. Validate the flow on a clean match, a mismatch, and a duplicate from your own documents.</p>
+        <ol class="pilot-steps">
+          <li><span>Copy the message and fill in your ERP and inbox.</span></li>
+          <li><span>Paste it into your Upwork conversation with Lu Zhang.</span></li>
+          <li><span>Share redacted sample documents so the pilot can be scoped.</span></li>
+        </ol>
+        <h3 style="margin-top:26px">What the pilot delivers</h3>
+        <ul class="delivers">
+          <li>Document intake and purchase-order lookup</li>
+          <li>Finance review for mismatches and duplicates</li>
+          <li>Draft writeback, with the record ID and an audit trail</li>
+          <li>Acceptance checks using your sample documents</li>
+        </ul>
+      </div>
+      <div class="pilot-compose">
+        <label for="pilot-brief">Message to send Lu Zhang on Upwork</label>
+        <textarea id="pilot-brief" readonly rows="4">I’d like to test one invoice workflow. We use [ERP] and receive supplier PDFs in [inbox]. We can share redacted invoice, purchase order, and receipt samples for a clean match, a mismatch, and a duplicate. Can you scope the pilot?</textarea>
+        <button type="button" id="copy-brief" class="cta secondary">Copy pilot message</button>
+        <p id="copy-status" class="copy-status" role="status" hidden></p>
+        <p class="by">From the portfolio of <strong>Lu Zhang</strong>. Replace the [bracketed] items before sending.</p>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap">Lu Zhang · Enterprise AI workflow integration portfolio</div></footer>
+
+<script>
+const examples = {
+  exception: {
+    name: "Northstar Industrial Supply", invoice: "INV-1048", purchaseOrder: "PO-2046",
+    receipt: "GR-0864", ordered: 100, received: 90, price: 24, draft: "PINV-DEMO-001",
+    stages: ["exception", "waiting", "corrected", "draft"]
+  },
+  clean: {
+    name: "Meridian Parts Co.", invoice: "INV-1052", purchaseOrder: "PO-2051",
+    receipt: "GR-0867", ordered: 40, received: 40, price: 32, draft: "PINV-DEMO-002",
+    stages: ["clean", "draft"]
+  },
+  duplicate: {
+    name: "Meridian Parts Co.", invoice: "INV-1052", purchaseOrder: "PO-2051",
+    receipt: "GR-0867", ordered: 40, received: 40, price: 32, draft: "PINV-DEMO-002",
+    stages: ["duplicate"]
+  }
+};
+
+const controls = {
+  advance: document.getElementById("advance"),
+  evidence: document.getElementById("show-evidence"),
+  reset: document.getElementById("reset"),
+  detail: document.getElementById("case-detail")
+};
+const money = new Intl.NumberFormat("en-US", { style:"currency", currency:"USD", maximumFractionDigits:0 });
+const servedLocally = ["127.0.0.1", "localhost"].includes(location.hostname);
+const sandbox = { available:false, working:false, record:null, message:"" };
+let selection = "exception";
+let step = 0;
+
+function setText(id, value) {
+  document.getElementById(id).textContent = value;
+}
+
+function stageView(stage, sample, billed) {
+  const delta = billed - sample.received;
+  const descriptions = {
+    exception: ["Needs review", "Request corrected invoice", "exception",
+      `${delta} more units billed than received`,
+      "Finance can request a corrected invoice before creating the draft."],
+    waiting: ["Awaiting correction", "Receive corrected invoice", "waiting",
+      "Correction requested", "Finance asked the supplier to send a revised invoice for the 90 units received."],
+    corrected: ["Ready for approval", "Approve & create draft", "ready",
+      `Corrected invoice · ${money.format(billed * sample.price)}`,
+      "The revised invoice bills 90 units, matching the receipt. The remaining 10 units are still open on the purchase order."],
+    clean: ["Ready for approval", "Approve & create draft", "ready",
+      `All 40 units match · ${money.format(billed * sample.price)}`,
+      "The supplier invoice, purchase order, and warehouse receipt agree."],
+    draft: [sandbox.record ? "ERPNext draft saved" : "Preview complete", "", "draft",
+      sandbox.record ? sandbox.record.name : `Sample draft ${sample.draft}`,
+      `Finance approved ${billed} units for ${money.format(billed * sample.price)}. ${sandbox.record ? "The ERPNext record is still a draft." : "This preview uses a sample draft ID."}`],
+    duplicate: ["Duplicate blocked", "", "duplicate",
+      "This invoice already has a draft",
+      `The supplier and invoice number match ${sample.draft}. The duplicate was logged without creating another draft.`]
+  };
+  return descriptions[stage];
+}
+
+function render() {
+  const sample = examples[selection];
+  const stage = sample.stages[step];
+  const corrected = selection === "exception" && step >= 2;
+  const invoice = sample.invoice + (corrected ? "-R1" : "");
+  const billed = corrected ? sample.received : sample.ordered;
+  const [status, action, tone, headline, detail] = stageView(stage, sample, billed);
+  const difference = (billed - sample.received) * sample.price;
+  const record = sandbox.record;
+  const draftLink = document.getElementById("draft-link");
+  setText("billed-amount", `${billed} × ${money.format(sample.price)} = ${money.format(billed * sample.price)}`);
+  setText("received-amount", `${sample.received} × ${money.format(sample.price)} = ${money.format(sample.received * sample.price)}`);
+  setText("variance-value", money.format(difference));
+  setText("variance-label", difference ? "On hold" : "Difference");
+  document.getElementById("variance-sheet").classList.toggle("flagged", Boolean(difference));
+  document.getElementById("variance-bar").style.setProperty("--matched", `${Math.min(100, 100 * sample.received / billed)}%`);
+  setText("desk-mode", sandbox.available ? "Local ERPNext sandbox" : "Preview mode");
+  setText("connection-text", record
+    ? `ERPNext API verified draft ${record.name} · ${money.format(record.total)} · ${record.reused ? "existing record" : "created and read back"}`
+    : sandbox.message || (sandbox.available ? "ERPNext sandbox available for draft writeback. Source values and approvals are simulated." : "Preview mode uses sample ERP draft IDs."));
+  document.getElementById("connection").className = "connection" + (record ? " success" : sandbox.message ? " offline" : "");
+  draftLink.hidden = !record;
+  if (record) draftLink.href = record.url;
+
+  setText("case-id", invoice + " · Supplier PDF");
+  setText("case-name", sample.name);
+  setText("invoice-id", invoice);
+  setText("order-id", sample.purchaseOrder);
+  setText("receipt-id", sample.receipt);
+  setText("billed", billed);
+  setText("ordered", sample.ordered);
+  setText("received", sample.received);
+  setText("case-status", status);
+  document.getElementById("case-status").className = "status " + tone;
+  document.getElementById("invoice-card").classList.toggle("flagged", billed > sample.received);
+  const title = document.createElement("strong");
+  title.textContent = headline;
+  document.getElementById("case-summary").replaceChildren(title, document.createElement("br"), detail);
+  controls.advance.hidden = !action;
+  controls.advance.textContent = sandbox.working ? "Saving and verifying…" : action;
+  controls.advance.disabled = sandbox.working;
+  controls.reset.disabled = sandbox.working;
+  controls.reset.hidden = step === 0;
+  document.querySelectorAll("[data-case]").forEach((button) => {
+    button.disabled = sandbox.working;
+    button.setAttribute("aria-pressed", String(button.dataset.case === selection));
+  });
+
+  const trail = [
+    `Inbox received ${sample.invoice}.pdf. Extracted invoice line: ${sample.ordered} units at ${money.format(sample.price)} each (sample PDF, page 1).`
+  ];
+  if (selection === "duplicate") {
+    trail.push(`Duplicate check found ${sample.draft} for this supplier and invoice number.`);
+  } else {
+    trail.push(`Matched ${sample.purchaseOrder} and ${sample.receipt}: ${sample.ordered} ordered, ${sample.received} received.`);
+  }
+  if (selection === "exception" && step >= 1) trail.push("Finance requested a corrected invoice for the received quantity.");
+  if (corrected) trail.push(`Revised invoice ${invoice} matched the ${sample.received} received units.`);
+  if (stage === "draft") {
+    trail.push(record ? `ERPNext confirmed ${record.name} has Draft status.` : `Preview finished with sample draft ${sample.draft}.`);
+  }
+  document.getElementById("audit").replaceChildren(...trail.map((entry) => {
+    const item = document.createElement("li");
+    item.textContent = entry;
+    return item;
+  }));
+}
+
+document.querySelectorAll("[data-case]").forEach((button) => {
+  button.addEventListener("click", () => {
+    selection = button.dataset.case;
+    sandbox.record = null;
+    sandbox.message = "";
+    step = 0;
+    render();
+  });
+});
+
+controls.advance.addEventListener("click", async () => {
+  const nextStage = examples[selection].stages[step + 1];
+  if (!nextStage || sandbox.working) return;
+  if (nextStage === "draft" && servedLocally) {
+    sandbox.working = true;
+    sandbox.message = "";
+    render();
+    try {
+      const response = await fetch("/api/drafts", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ scenario:selection }),
+        signal:AbortSignal.timeout(12000)
+      });
+      const draft = await response.json();
+      if (!response.ok || !draft.name || draft.docstatus !== 0) throw Error("No verified draft");
+      sandbox.record = draft;
+      sandbox.available = true;
+    } catch {
+      sandbox.message = "ERPNext did not confirm a draft. The ID shown is a preview. Retry to check for an existing draft.";
+    } finally {
+      sandbox.working = false;
+    }
+  }
+  step += 1;
+  render();
+  if (controls.advance.hidden) controls.evidence.focus();
+});
+
+controls.reset.addEventListener("click", () => {
+  sandbox.record = null;
+  sandbox.message = "";
+  step = 0;
+  render();
+  controls.advance.focus();
+});
+
+controls.evidence.addEventListener("click", () => {
+  const show = controls.detail.hidden;
+  controls.detail.hidden = !show;
+  controls.evidence.setAttribute("aria-expanded", String(show));
+  controls.evidence.textContent = show ? "Hide audit trail" : "View audit trail";
+});
+
+document.getElementById("try-demo").addEventListener("click", () => {
+  if (!sandbox.working) {
+    selection = "exception";
+    sandbox.record = null;
+    sandbox.message = "";
+    step = 0;
+    render();
+  }
+  document.getElementById("demo").focus({ preventScroll:true });
+});
+
+document.getElementById("copy-brief").addEventListener("click", async () => {
+  const brief = document.getElementById("pilot-brief");
+  const status = document.getElementById("copy-status");
+  status.hidden = false;
+  try {
+    await navigator.clipboard.writeText(brief.value);
+    status.textContent = "Copied. Paste it into your Upwork conversation.";
+  } catch {
+    brief.focus();
+    brief.select();
+    status.textContent = "The message is selected. Copy it and paste it into Upwork.";
+  }
+});
+
+render();
+if (servedLocally) {
+  fetch("/api/status", {signal:AbortSignal.timeout(3500)})
+    .then((response) => response.json())
+    .then(({ available }) => {
+      sandbox.available = available || sandbox.available;
+      render();
+    })
+    .catch(() => {});
+}
+</script>
+</body>
+</html>
